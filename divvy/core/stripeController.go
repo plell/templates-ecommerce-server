@@ -21,9 +21,7 @@ func getStripeKey() string {
 }
 
 type CreateCheckoutSessionResponse struct {
-	SessionID       string `json:"sessionId"`
-	PaymentIntentID string `json:"paymentIntentId"`
-	Price           int64  `json:"price"`
+	SessionID string `json:"sessionId"`
 }
 
 type CheckoutSessionRequest struct {
@@ -35,7 +33,7 @@ type CheckoutSessionRequest struct {
 	UserSelector string `json:"userSelector"`
 }
 
-func CreateCheckoutSessionFromLinkByCustomer(c echo.Context) error {
+func CreateCheckoutSessionByCustomer(c echo.Context) error {
 
 	// the user uses this to get a checkout session from a link.
 	// if the link isFixedAmount, amount check
@@ -88,7 +86,6 @@ func CreateCheckoutSessionFromLinkByCustomer(c echo.Context) error {
 	session, err := session.New(params)
 
 	if err != nil {
-		// return c.Error(err)
 		return echo.NewHTTPError(http.StatusUnauthorized, err)
 	}
 

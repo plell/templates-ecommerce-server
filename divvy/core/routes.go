@@ -23,7 +23,7 @@ func MakeRoutes(e *echo.Echo) {
 
 	// token not required group
 	e.POST("/stripe/checkoutLink", CreateCheckoutLink)
-	e.POST("/stripe/createSessionFromCheckoutLink", CreateCheckoutSessionFromLinkByCustomer)
+	e.POST("/stripe/createSessionByCustomer", CreateCheckoutSessionByCustomer)
 
 	// client webhooks, userSelector required
 	// u := e.Group("")
