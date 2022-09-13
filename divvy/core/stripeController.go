@@ -93,6 +93,8 @@ func CreateCheckoutSessionByCustomer(c echo.Context) error {
 		SessionID: session.ID,
 	}
 
+	// test
+
 	return c.JSON(http.StatusOK, data)
 }
 
