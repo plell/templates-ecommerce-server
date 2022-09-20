@@ -6,8 +6,6 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-// var SocketServer *socketio.Server
-
 func MakeRoutes(e *echo.Echo) {
 
 	e.Use(LogPathAndIp)
@@ -22,8 +20,9 @@ func MakeRoutes(e *echo.Echo) {
 	e.Any("/webhook", echo.HandlerFunc(HandleStripeWebhook))
 
 	// token not required group
-	e.POST("/stripe/checkoutLink", CreateCheckoutLink)
-	e.POST("/stripe/createSessionByCustomer", CreateCheckoutSessionByCustomer)
+	e.POST("/stripe/createAmountSessionByCustomer", CreateAmountCheckoutSessionByCustomer)
+	e.POST("/stripe/createProductSessionByCustomer", CreateProductCheckoutSessionByCustomer)
+	e.GET("/stripe/products", GetProductsFromStripe)
 
 	// client webhooks, userSelector required
 	// u := e.Group("")
