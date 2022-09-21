@@ -7,10 +7,12 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 
 	"github.com/labstack/echo/v4"
 	"github.com/stripe/stripe-go/v72"
 	"github.com/stripe/stripe-go/v72/checkout/session"
+	"github.com/stripe/stripe-go/v72/price"
 	"github.com/stripe/stripe-go/v72/product"
 	"github.com/stripe/stripe-go/v72/webhook"
 )
@@ -31,15 +33,31 @@ type StripeProduct struct {
 func GetProductsFromStripe(c echo.Context) error {
 	stripe.Key = getStripeKey()
 
+	// get prices
+	priceParams := &stripe.PriceListParams{}
+	price_i := price.List(priceParams)
+
+	var prices = make(map[string]string)
+
+	for price_i.Next() {
+		p := price_i.Price()
+		prod_id := stripe.String(p.Product.ID)
+		prices[*prod_id] = strconv.Itoa(int(p.UnitAmount))
+	}
+
 	params := &stripe.ProductListParams{}
 
-	// params.Filters.AddFilter("limit", "", "3")
+	// get products
 	i := product.List(params)
-
 	products := []*stripe.Product{}
 
 	for i.Next() {
 		p := i.Product()
+		var metaData = make(map[string]string)
+		if _, ok := prices[p.ID]; ok {
+			metaData["price"] = prices[p.ID]
+		}
+		p.Metadata = metaData
 		products = append(products, p)
 	}
 
@@ -68,6 +86,7 @@ type CheckoutSessionRequest struct {
 
 func makeOrderMetaData(request CheckoutSessionRequest) map[string]string {
 	var metaDataPack = make(map[string]string)
+
 	metaDataPack["email"] = request.Customer.Email
 	metaDataPack["name"] = request.Customer.FirstName + " " + request.Customer.LastName
 	metaDataPack["pickup_date"] = request.Customer.PickupDate
@@ -94,15 +113,30 @@ func CreateProductCheckoutSessionByCustomer(c echo.Context) error {
 
 	stripe.Key = getStripeKey()
 
+	// get prices
+	priceParams := &stripe.PriceListParams{}
+	price_i := price.List(priceParams)
+
+	var prices = make(map[string]int64)
+
+	for price_i.Next() {
+		p := price_i.Price()
+		prod_id := stripe.String(p.Product.ID)
+		prices[*prod_id] = p.UnitAmount
+	}
+
 	// set up line items
 	lineItems := []*stripe.CheckoutSessionLineItemParams{}
 
 	for product_id, quantity := range request.Products {
+		unitAmount := stripe.Int64(prices[product_id])
 		item := &stripe.CheckoutSessionLineItemParams{
 			PriceData: &stripe.CheckoutSessionLineItemPriceDataParams{
-				Product:  stripe.String(string(product_id)),
-				Currency: stripe.String(string(stripe.CurrencyUSD)),
+				Currency:   stripe.String(string(stripe.CurrencyUSD)),
+				Product:    stripe.String(string(product_id)),
+				UnitAmount: unitAmount,
 			},
+
 			Quantity: stripe.Int64(quantity),
 		}
 		lineItems = append(lineItems, item)
@@ -145,7 +179,6 @@ func CreateAmountCheckoutSessionByCustomer(c echo.Context) error {
 
 	// you do not need a token to run this route
 	// potential for abuse
-
 	request := CheckoutSessionRequest{}
 	defer c.Request().Body.Close()
 	err := json.NewDecoder(c.Request().Body).Decode(&request)
@@ -165,7 +198,8 @@ func CreateAmountCheckoutSessionByCustomer(c echo.Context) error {
 	stripe.Key = getStripeKey()
 	params := &stripe.CheckoutSessionParams{
 		PaymentIntentData: &stripe.CheckoutSessionPaymentIntentDataParams{
-			Metadata: metaData,
+			Metadata:     metaData,
+			ReceiptEmail: &request.Customer.Email,
 		},
 		PaymentMethodTypes: stripe.StringSlice([]string{
 			"card",
