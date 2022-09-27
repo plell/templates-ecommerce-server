@@ -1,25 +1,19 @@
 version: "3.3"  # optional since v1.27.0
+
+networks:
+    web:
+        external: true
+    internal:
+        external: false
+
 services:
-    nginx:
-        container_name: nginx
-        restart: unless-stopped
-        image: nginx
-        ports:
-            - 80:80
-            - 443:443
-        volumes:
-            - ./nginx/nginx.conf:/etc/nginx/nginx.conf
-            - ./certbot/conf:/etc/letsencrypt
-            - ./certbot/www:/var/www/certbot
-    certbot:
-        image: certbot/certbot
-        container_name: certbot
-        volumes: 
-        - ./certbot/conf:/etc/letsencrypt
-        - ./certbot/www:/var/www/certbot
-        command: certonly --webroot -w /var/www/certbot --email plelldavid@gmail.com -d api.davidplell.com --agree-tos
     divvy:
         build: .
-        ports:
-            - "8000:8000"
-            
+        labels:
+        - traefik.http.routers.blog.rule=Host(`api.davidplell.com`)
+        - traefik.http.routers.blog.tls=true
+        - traefik.http.routers.blog.tls.certresolver=lets-encrypt
+        - traefik.port=80
+        networks:
+        - internal
+        - web
