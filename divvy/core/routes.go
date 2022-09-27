@@ -30,5 +30,4 @@ func MakeRoutes(e *echo.Echo) {
 	// u := e.Group("")
 	// u.Use(UserExists)
 	// u.Any("/ws/:userSelector", echo.HandlerFunc(WsEndpoint))
-
 }
