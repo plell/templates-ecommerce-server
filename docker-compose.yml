@@ -1,62 +1,22 @@
 version: "3.3"  # optional since v1.27.0
 services:
-
-    traefik:
-        image: "traefik:v2.8"
-        container_name: "traefik"
-        # restart: always
-        command:
-        #- "--log.level=DEBUG"
-        - "--api.insecure=true"
-        - "--providers.docker=true"
-        - "--providers.docker.exposedbydefault=false"
-        - "--entrypoints.websecure.address=:443"
-        - "--certificatesresolvers.myresolver.acme.tlschallenge=true"
-        #- "--certificatesresolvers.myresolver.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory"
-        - "--certificatesresolvers.myresolver.acme.email=plelldavid@gmail.com"
-        - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
+    webserver:
+        image: nginx:latest
         ports:
-        - "443:443"
-        - "8080:8080"
+        - 80:80
+        - 443:443
+        restart: always
         volumes:
-        - "./letsencrypt:/letsencrypt"
-        - "/var/run/docker.sock:/var/run/docker.sock:ro"
-    # traefik:
-    #     image: traefik:2.1
-    #     restart: always
-    #     command:
-    #         #- "--log.level=DEBUG"
-    #         - "--api.insecure=false"
-    #         - "--providers.docker=true"
-    #         - "--providers.docker.exposedbydefault=false"
-    #         - "--entrypoints.web.address=:443"
-    #     ports:
-    #         - '80:80'
-    #         - '443:443'
-    #         - "8080:8080"
-    #     volumes:
-    #         - ./traefik:/etc/traefik
-    #         - /var/run/docker.sock:/var/run/docker.sock:ro
+        - ./nginx/conf/:/etc/nginx/conf.d/:ro
+        - ./certbot/www:/var/www/certbot/:ro
+        - ./certbot/conf/:/etc/nginx/ssl/:ro
+    certbot:
+        image: certbot/certbot:latest
+        volumes:
+        - ./certbot/www/:/var/www/certbot/:rw
+        - ./certbot/conf/:/etc/letsencrypt/:rw
     divvy:
         build: .
         ports:
             - "8000:8000"
-        labels:
-            - 'traefik.enable=true'
-            - 'traefik.http.routers.divvy.rule=Host(`api.davidplell.com`)'
-            - "traefik.http.routers.divvy.entrypoints=websecure"
-            - "traefik.http.routers.divvy.tls.certresolver=myresolver"
-            # - 'traefik.http.routers.divvy-go.tls=true'
-            # - 'traefik.http.routers.divvy-go.tls.certresolver=lets-encrypt'
             
-
-    
-
-    # whoami:
-    #     image: "traefik/whoami"
-    #     container_name: "simple-service"
-    #     labels:
-    #     - "traefik.enable=true"
-    #     - "traefik.http.routers.whoami.rule=Host(`whoami.example.com`)"
-    #     - "traefik.http.routers.whoami.entrypoints=websecure"
-    #     - "traefik.http.routers.whoami.tls.certresolver=myresolver"

@@ -4,8 +4,8 @@ to deploy on server:
 
 To reset docker cache:
 
-    docker-compose down
+    docker-compose down &&
     docker-compose rm &&
     docker-compose pull &&
     docker-compose build --no-cache &&
-    docker-compose up -d --force-recreate
+    docker-compose up --force-recreate
