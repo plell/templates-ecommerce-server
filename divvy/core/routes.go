@@ -23,6 +23,8 @@ func MakeRoutes(e *echo.Echo) {
 	e.POST("/stripe/createAmountSessionByCustomer", CreateAmountCheckoutSessionByCustomer)
 	e.POST("/stripe/createProductSessionByCustomer", CreateProductCheckoutSessionByCustomer)
 	e.GET("/stripe/products", GetProductsFromStripe)
+	e.POST("/email/subscribe", SendSubscriberEmail)
+	e.POST("/email/contact", SendContactFormEmail)
 
 	// client webhooks, userSelector required
 	// u := e.Group("")

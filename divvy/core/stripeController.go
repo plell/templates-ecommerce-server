@@ -64,38 +64,18 @@ func GetProductsFromStripe(c echo.Context) error {
 	return c.JSON(http.StatusOK, products)
 }
 
-type CustomerDetails struct {
-	Email          string `json:"email"`
-	Phone          string `json:"phone"`
-	PickupDate     string `json:"pickup_date"`
-	FirstName      string `json:"first_name"`
-	LastName       string `json:"last_name"`
-	AddressLine1   string `json:"address_line_1"`
-	AddressLine2   string `json:"address_line_2"`
-	AddressState   string `json:"address_state"`
-	AddressZip     string `json:"address_zip"`
-	AddressCountry string `json:"address_country"`
-}
-
 type CheckoutSessionRequest struct {
-	Amount   int64            `json:"amount"`
-	Products map[string]int64 `json:"products"`
-	Currency string           `json:"currency"`
-	Customer CustomerDetails  `json:"customer"`
+	Amount   int64             `json:"amount"`
+	Products map[string]int64  `json:"products"`
+	Currency string            `json:"currency"`
+	Form     map[string]string `json:"form"`
 }
 
 func makeOrderMetaData(request CheckoutSessionRequest) map[string]string {
 	var metaDataPack = make(map[string]string)
-
-	metaDataPack["email"] = request.Customer.Email
-	metaDataPack["name"] = request.Customer.FirstName + " " + request.Customer.LastName
-	metaDataPack["pickup_date"] = request.Customer.PickupDate
-	metaDataPack["phone"] = request.Customer.Phone
-	metaDataPack["address_line1"] = request.Customer.AddressLine1
-	metaDataPack["address_line2"] = request.Customer.AddressLine2
-	metaDataPack["address_state"] = request.Customer.AddressState
-	metaDataPack["address_country"] = request.Customer.AddressCountry
-	metaDataPack["address_zip"] = request.Customer.AddressZip
+	for key, value := range request.Form {
+		metaDataPack[key] = value
+	}
 	return metaDataPack
 }
 
@@ -144,9 +124,15 @@ func CreateProductCheckoutSessionByCustomer(c echo.Context) error {
 
 	metaData := makeOrderMetaData(request)
 
+	customerEmail := ""
+	if _, ok := metaData["email"]; ok {
+		customerEmail = metaData["email"]
+	}
+
 	params := &stripe.CheckoutSessionParams{
 		PaymentIntentData: &stripe.CheckoutSessionPaymentIntentDataParams{
-			Metadata: metaData,
+			Metadata:     metaData,
+			ReceiptEmail: &customerEmail,
 		},
 		PaymentMethodTypes: stripe.StringSlice([]string{
 			"card",
@@ -170,11 +156,6 @@ func CreateProductCheckoutSessionByCustomer(c echo.Context) error {
 	return c.JSON(http.StatusOK, data)
 }
 
-type AmountCheckoutSessionRequest struct {
-	Amount   int64  `json:"amount"`
-	Currency string `json:"currency"`
-}
-
 func CreateAmountCheckoutSessionByCustomer(c echo.Context) error {
 
 	// you do not need a token to run this route
@@ -196,10 +177,16 @@ func CreateAmountCheckoutSessionByCustomer(c echo.Context) error {
 	metaData := makeOrderMetaData(request)
 
 	stripe.Key = getStripeKey()
+
+	customerEmail := ""
+	if _, ok := metaData["email"]; ok {
+		customerEmail = metaData["email"]
+	}
+
 	params := &stripe.CheckoutSessionParams{
 		PaymentIntentData: &stripe.CheckoutSessionPaymentIntentDataParams{
 			Metadata:     metaData,
-			ReceiptEmail: &request.Customer.Email,
+			ReceiptEmail: &customerEmail,
 		},
 		PaymentMethodTypes: stripe.StringSlice([]string{
 			"card",
@@ -343,6 +330,9 @@ func handleCompletedCheckoutSession(session stripe.CheckoutSession) {
 		Amount:          session.AmountTotal,
 		PaymentIntentID: session.PaymentIntent.ID,
 	})
+
+	createGoogleCalendarEvent(session)
+	SendOrderReceivedEmail(session)
 }
 
 func handleSuccessfulPaymentIntent(intent stripe.PaymentIntent) {
@@ -366,12 +356,12 @@ func handleSuccessfulCharge(ch stripe.Charge) {
 		PaymentIntentID: ch.PaymentIntent.ID,
 	})
 
-	newcharge := Charge{
-		ChargeID: ch.ID,
-		Amount:   int64(amount),
-	}
+	// newcharge := Charge{
+	// 	ChargeID: ch.ID,
+	// 	Amount:   int64(amount),
+	// }
 
-	DB.Create(&newcharge)
+	// DB.Create(&newcharge)
 
-	SendPaymentReceivedEmail(ch)
+	// SendPaymentReceivedEmail(ch)
 }
