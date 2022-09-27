@@ -34,6 +34,16 @@ func createGoogleCalendarEvent(session stripe.CheckoutSession) {
 		eventTime = metadata["pickup_date"]
 	}
 
+	firstName := ""
+	lastName := ""
+
+	if _, ok := metadata["first_name"]; ok {
+		firstName = metadata["first_name"]
+	}
+	if _, ok := metadata["last_name"]; ok {
+		lastName = metadata["last_name"]
+	}
+
 	description := "FORM ORDER DETAILS \n\n"
 
 	for _, md := range session.PaymentIntent.Metadata {
@@ -49,7 +59,7 @@ func createGoogleCalendarEvent(session stripe.CheckoutSession) {
 		description += itemName + "(" + quantity + ") - Item ID: " + item.ID + " \n"
 	}
 
-	summary := "New Order"
+	summary := "New Order: " + firstName + " " + lastName + " (PAYMENT INTENT ID " + session.PaymentIntent.ID + ")"
 
 	event := &calendar.Event{
 		Summary:     summary,
