@@ -26,3 +26,7 @@ To reset docker cache:
     docker-compose pull &&
     docker-compose build --no-cache &&
     docker-compose up --force-recreate
+
+traefik how to:
+
+    https://www.digitalocean.com/community/tutorials/how-to-use-traefik-v2-as-a-reverse-proxy-for-docker-containers-on-ubuntu-20-04
