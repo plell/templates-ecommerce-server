@@ -13,7 +13,7 @@ services:
         - traefik.http.routers.divvy.rule=Host(`api.plellworks.com`)
         - traefik.http.routers.divvy.tls=true
         - traefik.http.routers.divvy.tls.certresolver=lets-encrypt
-        - traefik.port=80
+        - traefik.port=8000
         networks:
         - internal
         - web
