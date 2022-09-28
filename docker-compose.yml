@@ -10,10 +10,12 @@ services:
     divvy:
         build: .
         labels:
-        - traefik.http.routers.divvy.rule=Host(`api.plellworks.com`)
-        - traefik.http.routers.divvy.tls=true
-        - traefik.http.routers.divvy.tls.certresolver=lets-encrypt
-        - traefik.port=8000
+            - traefik.http.routers.divvy.rule=Host(`api.plellworks.com`)
+            - traefik.http.routers.divvy.tls=true
+            - traefik.http.routers.divvy.tls.certresolver=lets-encrypt
+            - traefik.port=80
         networks:
-        - internal
-        - web
+            - internal
+            - web
+        ports:
+            - "8000:8000"
