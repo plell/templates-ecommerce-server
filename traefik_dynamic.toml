@@ -1,5 +1,5 @@
 [http.routers.api]
-  rule = "Host(`api.davidplell.com`)"
+  rule = "Host(`api.plellworks.com`)"
   entrypoints = ["websecure"]
   service = "api@internal"
 [http.routers.api.tls]
