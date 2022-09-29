@@ -171,6 +171,18 @@ func CreateProductCheckoutSessionByCustomer(c echo.Context) error {
 		SessionID: session.ID,
 	}
 
+	log.Println("session.LineItems", session.LineItems)
+
+	// body := `<div>
+	// 	Product Checkout created!
+	// 	<div style="margin:80px">
+	// 	MARGIN BABY
+	// 	</div>
+	// </div>`
+
+	// createGoogleCalendarEvent(metaData, *session)
+	// sendGoogleMail("plelldavid@gmail.com", body)
+
 	return c.JSON(http.StatusOK, data)
 }
 
@@ -243,6 +255,15 @@ func CreateAmountCheckoutSessionByCustomer(c echo.Context) error {
 	data := CreateCheckoutSessionResponse{
 		SessionID: session.ID,
 	}
+
+	body := `<div>
+		Amount Checkout created!
+		<div style="margin:80px">
+		MARGIN BABY
+		</div>
+	</div>`
+
+	sendGoogleMail("plelldavid@gmail.com", body)
 
 	log.Println("session.ID", session.ID)
 
@@ -359,7 +380,7 @@ func handleCompletedCheckoutSession(session stripe.CheckoutSession) {
 		PaymentIntentID: session.PaymentIntent.ID,
 	})
 
-	createGoogleCalendarEvent(session)
+	createGoogleCalendarEvent(session.PaymentIntent.Metadata, session)
 	SendOrderReceivedEmail(session)
 }
 

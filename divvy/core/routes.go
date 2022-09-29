@@ -16,6 +16,9 @@ func MakeRoutes(e *echo.Echo) {
 		`)
 	})
 
+	e.Any("/google/login", echo.HandlerFunc(GoogleLogin))
+	e.Any("/google/callback", echo.HandlerFunc(GoogleCallback))
+
 	// stripe webhook listener
 	e.Any("/webhook", echo.HandlerFunc(HandleStripeWebhook))
 
