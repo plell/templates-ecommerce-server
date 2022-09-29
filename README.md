@@ -1,8 +1,17 @@
-create the traefik container:
+create the network and traefik container:
 
     docker network create web
+
+create certificate file:
+
     touch acme.json
     chmod 600 acme.json
+
+create admin password for traefik monitor with htpasswd, then put that password into traefik_dynamic line 3:
+
+    htpasswd -c .htpasswd admin
+
+create the traefik container
 
     docker run -d \
     -v /var/run/docker.sock:/var/run/docker.sock \
@@ -15,7 +24,7 @@ create the traefik container:
     --name traefik \
     traefik:v2.2
 
-to deploy on server:
+start docker-compose services:
 
     docker-compose up -d
 
@@ -31,10 +40,6 @@ traefik how to:
 
     https://www.digitalocean.com/community/tutorials/how-to-use-traefik-v2-as-a-reverse-proxy-for-docker-containers-on-ubuntu-20-04
 
-create htpasswd:
-
-    htpasswd -c .htpasswd admin
-
 monitoring:
 
-    https://monitor.plellworks.com/dashboard/
+    https://monitor.[domain name]/dashboard/

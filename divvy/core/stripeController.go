@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"strings"
 
 	"github.com/labstack/echo/v4"
 	"github.com/stripe/stripe-go/v72"
@@ -77,6 +78,23 @@ func makeOrderMetaData(request CheckoutSessionRequest) map[string]string {
 		metaDataPack[key] = value
 	}
 	return metaDataPack
+}
+
+var skipList = []string{"pickup_date", "first_name", "last_name", "phone", "email", "cake_type"}
+
+func makeOrderDescriptionFromMetadata(metadata map[string]string) string {
+	description := ""
+
+	for key, value := range metadata {
+		if stringArrayContains(skipList, key) {
+			continue
+		}
+		// replace _ and make capitalize words
+		newKey := strings.ToUpper(strings.ReplaceAll(key, "_", " "))
+		description += newKey + ": " + value + " - \n"
+	}
+
+	return description
 }
 
 func CreateProductCheckoutSessionByCustomer(c echo.Context) error {
@@ -174,19 +192,22 @@ func CreateAmountCheckoutSessionByCustomer(c echo.Context) error {
 		return c.String(http.StatusInternalServerError, "Amount minimum is 1USD")
 	}
 
-	metaData := makeOrderMetaData(request)
-
 	stripe.Key = getStripeKey()
+
+	metaData := makeOrderMetaData(request)
 
 	customerEmail := ""
 	if _, ok := metaData["email"]; ok {
 		customerEmail = metaData["email"]
 	}
 
+	humanReadableMetaDataString := makeOrderDescriptionFromMetadata(metaData)
+
 	params := &stripe.CheckoutSessionParams{
 		PaymentIntentData: &stripe.CheckoutSessionPaymentIntentDataParams{
 			Metadata:     metaData,
 			ReceiptEmail: &customerEmail,
+			Description:  stripe.String(humanReadableMetaDataString),
 		},
 		PaymentMethodTypes: stripe.StringSlice([]string{
 			"card",
@@ -197,7 +218,9 @@ func CreateAmountCheckoutSessionByCustomer(c echo.Context) error {
 				PriceData: &stripe.CheckoutSessionLineItemPriceDataParams{
 					Currency: stripe.String(string(stripe.CurrencyUSD)),
 					ProductData: &stripe.CheckoutSessionLineItemPriceDataProductDataParams{
-						Name: stripe.String(STORE_PRODUCT_NAME),
+						Name:        stripe.String(STORE_PRODUCT_NAME),
+						Metadata:    metaData,
+						Description: stripe.String(humanReadableMetaDataString),
 					},
 					UnitAmount: stripe.Int64(amount),
 				},
@@ -208,15 +231,20 @@ func CreateAmountCheckoutSessionByCustomer(c echo.Context) error {
 		CancelURL:  stripe.String(PAYMENT_CANCEL_URL),
 	}
 
+	log.Println("getting session")
+
 	session, err := session.New(params)
 
 	if err != nil {
+		log.Println("session error", err)
 		return echo.NewHTTPError(http.StatusUnauthorized, err)
 	}
 
 	data := CreateCheckoutSessionResponse{
 		SessionID: session.ID,
 	}
+
+	log.Println("session.ID", session.ID)
 
 	return c.JSON(http.StatusOK, data)
 }
