@@ -7,6 +7,7 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	"github.com/robfig/cron/v3"
 
 	core "github.com/plell/divvygo/divvy/core"
 )
@@ -38,14 +39,15 @@ func main() {
 	// core.MigrateUp()
 
 	// cron stuff
-	// c := cron.New()
-	// c.AddFunc("@every 24h", func() {
-	// 	fmt.Println("cron ran!")
-	// })
-	// c.Start()
+	c := cron.New()
+	c.AddFunc("@every 20m", func() {
+		// tokens expire after 1h
+		core.GoogleRefreshTokenIfExists()
+	})
+	c.Start()
 
 	// client webhooks
-	go core.RunWebsocketBroker()
+	// go core.RunWebsocketBroker()
 
 	// logger
 	// core.StartDNALogger()

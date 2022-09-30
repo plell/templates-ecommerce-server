@@ -8,6 +8,7 @@ networks:
 
 services:
     divvy:
+        restart: on-failure
         build: .
         labels:
             - traefik.http.routers.divvy.rule=Host(`api.plellworks.com`)

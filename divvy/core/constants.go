@@ -21,7 +21,6 @@ func getGoogleKeys() (string, string) {
 }
 
 func SetupConfig() *oauth2.Config {
-
 	clientId, clientSecret := getGoogleKeys()
 	conf := &oauth2.Config{
 		ClientID:     clientId,
@@ -36,3 +35,17 @@ func SetupConfig() *oauth2.Config {
 
 	return conf
 }
+
+var RECIEPT_EMAIL_HTML = `<div>
+Product Checkout created!
+<div style="margin:80px">
+MARGIN BABY
+</div>
+</div>`
+
+var ORDER_EMAIL_HTML = `<div>
+Product Checkout created!
+<div style="margin:80px">
+MARGIN BABY
+</div>
+</div>`

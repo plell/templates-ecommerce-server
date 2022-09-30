@@ -8,38 +8,40 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/labstack/echo/v4"
-	"github.com/stripe/stripe-go/v72"
 	"golang.org/x/oauth2"
 	"google.golang.org/api/calendar/v3"
 	"google.golang.org/api/gmail/v1"
 	"google.golang.org/api/option"
 )
 
-// func GoogleRefreshToken() {
-// 	tok, err := tokenFromFile(tokenPath)
-// 	if err != nil {
-// 		log.Println("No token to refresh")
-// 		return
-// 	}
+func GoogleRefreshTokenIfExists() {
+	log.Println("GoogleRefreshTokenIfExists")
 
-// 	config := SetupConfig()
+	token, err := tokenFromFile(tokenPath)
 
-// 	// refresh token
-// 	// tok.RefreshToken
-// 	updatedToken, err := config.TokenSource(context.TODO(), token).Token()
+	if err != nil {
+		log.Println("No token to refresh")
+		return
+	}
 
-// 	token, err := googleConfig.Exchange(context.Background(), code)
-// 	if err != nil {
-// 		log.Println("Failed to refresh!")
-// 		return
-// 	}
+	config := SetupConfig()
 
-// 	// store new token
-// 	saveToken(tokenPath, token)
-// }
+	tokenSource := config.TokenSource(context.TODO(), token)
+	newToken, err := tokenSource.Token()
+	if err != nil {
+		log.Println("Failed to get token from Token source")
+		return
+	}
+
+	if newToken.AccessToken != token.AccessToken {
+		saveToken(tokenPath, newToken)
+		log.Println("Saved new token")
+	}
+}
 
 var tokenPath = "tokens/google-token.json"
 
@@ -133,7 +135,8 @@ func saveToken(path string, token *oauth2.Token) {
 	json.NewEncoder(f).Encode(token)
 }
 
-func sendGoogleMail(to string, bodyhtml string) {
+func sendGoogleMail(to string, subject string, data SessionOrderData, bodyhtml string) {
+	log.Println("sendGoogleMail")
 	ctx := context.Background()
 	client := getClient()
 
@@ -144,10 +147,10 @@ func sendGoogleMail(to string, bodyhtml string) {
 	}
 
 	_to := "To: " + to + "\n"
-	subject := "Subject: Test email from Go!\n"
+	_subject := "Subject: " + subject + "\n"
 	mime := "MIME-version: 1.0;\nContent-Type: text/html; charset=\"UTF-8\";\n\n"
 	body := "<html><body>" + bodyhtml + "</body></html>"
-	byteMsg := []byte(_to + subject + mime + body)
+	byteMsg := []byte(_to + _subject + mime + body)
 
 	encodedMessage := base64.StdEncoding.EncodeToString(byteMsg)
 
@@ -182,7 +185,8 @@ func sendGoogleMail(to string, bodyhtml string) {
 	fmt.Printf("ok.HTTPStatusCode: %v\n", ok.HTTPStatusCode)
 }
 
-func createGoogleCalendarEvent(metadata map[string]string, session stripe.CheckoutSession) {
+func createGoogleCalendarEvent(orderData SessionOrderData) {
+	log.Println("createGoogleCalendarEvent")
 	ctx := context.Background()
 	client := getClient()
 
@@ -191,6 +195,8 @@ func createGoogleCalendarEvent(metadata map[string]string, session stripe.Checko
 		log.Printf("Unable to retrieve Calendar client: %v", err)
 		return
 	}
+
+	metadata := orderData.MetaData
 
 	eventTime := ""
 
@@ -223,25 +229,19 @@ func createGoogleCalendarEvent(metadata map[string]string, session stripe.Checko
 
 	description := "FORM ORDER DETAILS \n\n"
 
-	for key, md := range metadata {
-		description += key + ": " + md + " \n"
-	}
+	description += makeOrderDescriptionFromMetadata(metadata)
 
 	description += "\n\n\nSHOP ORDER DETAILS \n\n"
 
-	// for k, _ := range lineItems {
-	// 	log.Println("k ", k)
-	// }
+	lineItems := orderData.LineItems
 
-	// for k, item := range lineItems {
-	// 	log.Println("k ", k)
-	// 	log.Println("item ", item)
-	// 	quantity := strconv.Itoa(int(item.Quantity))
-	// 	itemName := item.Price.Product.Name
-	// 	description += itemName + "(" + quantity + ") - Item ID: " + item.ID + " \n"
-	// }
+	for _, item := range lineItems {
+		quantity := strconv.Itoa(int(item.StripeLineItem.Quantity))
+		itemName := item.Name
+		description += itemName + " (" + quantity + ") \n"
+	}
 
-	summary := "New Order: " + firstName + " " + lastName
+	summary := "Order: " + firstName + " " + lastName
 
 	event := &calendar.Event{
 		Summary:     summary,
@@ -264,6 +264,6 @@ func createGoogleCalendarEvent(metadata map[string]string, session stripe.Checko
 	if err != nil {
 		log.Printf("Unable to create event. %v\n", err)
 	}
-	fmt.Printf("Event created: %s\n", event.HtmlLink)
-	fmt.Printf("Event created: %s\n", event.HtmlLink)
+	log.Printf("Event created: %s\n", event.HtmlLink)
+
 }

@@ -26,8 +26,10 @@ var upgrader = websocket.Upgrader{
 }
 
 func WebsocketWriter(sm *SocketMessage) {
-	log.Println("do writer!")
-	Broadcast <- sm
+	// mute writer when socket server not in use
+
+	// log.Println("do writer!")
+	// Broadcast <- sm
 }
 
 func WsEndpoint(c echo.Context) error {

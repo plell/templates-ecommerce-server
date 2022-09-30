@@ -13,6 +13,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/stripe/stripe-go/v72"
 	"github.com/stripe/stripe-go/v72/checkout/session"
+	"github.com/stripe/stripe-go/v72/paymentintent"
 	"github.com/stripe/stripe-go/v72/price"
 	"github.com/stripe/stripe-go/v72/product"
 	"github.com/stripe/stripe-go/v72/webhook"
@@ -112,10 +113,11 @@ func CreateProductCheckoutSessionByCustomer(c echo.Context) error {
 	stripe.Key = getStripeKey()
 
 	// get prices
-	priceParams := &stripe.PriceListParams{}
-	price_i := price.List(priceParams)
 
 	var prices = make(map[string]int64)
+
+	priceParams := &stripe.PriceListParams{}
+	price_i := price.List(priceParams)
 
 	for price_i.Next() {
 		p := price_i.Price()
@@ -147,10 +149,13 @@ func CreateProductCheckoutSessionByCustomer(c echo.Context) error {
 		customerEmail = metaData["email"]
 	}
 
+	humanReadableMetaDataString := makeOrderDescriptionFromMetadata(metaData)
+
 	params := &stripe.CheckoutSessionParams{
 		PaymentIntentData: &stripe.CheckoutSessionPaymentIntentDataParams{
-			Metadata:     metaData,
 			ReceiptEmail: &customerEmail,
+			Metadata:     metaData,
+			Description:  stripe.String(humanReadableMetaDataString),
 		},
 		PaymentMethodTypes: stripe.StringSlice([]string{
 			"card",
@@ -170,18 +175,6 @@ func CreateProductCheckoutSessionByCustomer(c echo.Context) error {
 	data := CreateCheckoutSessionResponse{
 		SessionID: session.ID,
 	}
-
-	log.Println("session.LineItems", session.LineItems)
-
-	body := `<div>
-		Product Checkout created!
-		<div style="margin:80px">
-		MARGIN BABY
-		</div>
-	</div>`
-
-	createGoogleCalendarEvent(metaData, *session)
-	sendGoogleMail("plelldavid@gmail.com", body)
 
 	return c.JSON(http.StatusOK, data)
 }
@@ -217,8 +210,8 @@ func CreateAmountCheckoutSessionByCustomer(c echo.Context) error {
 
 	params := &stripe.CheckoutSessionParams{
 		PaymentIntentData: &stripe.CheckoutSessionPaymentIntentDataParams{
-			Metadata:     metaData,
 			ReceiptEmail: &customerEmail,
+			Metadata:     metaData,
 			Description:  stripe.String(humanReadableMetaDataString),
 		},
 		PaymentMethodTypes: stripe.StringSlice([]string{
@@ -243,8 +236,6 @@ func CreateAmountCheckoutSessionByCustomer(c echo.Context) error {
 		CancelURL:  stripe.String(PAYMENT_CANCEL_URL),
 	}
 
-	log.Println("getting session")
-
 	session, err := session.New(params)
 
 	if err != nil {
@@ -256,18 +247,54 @@ func CreateAmountCheckoutSessionByCustomer(c echo.Context) error {
 		SessionID: session.ID,
 	}
 
-	body := `<div>
-		Amount Checkout created!
-		<div style="margin:80px">
-		MARGIN BABY
-		</div>
-	</div>`
-
-	sendGoogleMail("plelldavid@gmail.com", body)
-
-	log.Println("session.ID", session.ID)
-
 	return c.JSON(http.StatusOK, data)
+}
+
+func getSessionOrderData(sess stripe.CheckoutSession) SessionOrderData {
+
+	data := SessionOrderData{}
+
+	// first get products, because lineItems dont include names!
+	stripe.Key = getStripeKey()
+
+	products := []*stripe.Product{}
+	params := &stripe.ProductListParams{}
+
+	i := product.List(params)
+	for i.Next() {
+		p := i.Product()
+		products = append(products, p)
+	}
+
+	lineItems := []OrderLineItem{}
+
+	ii := session.ListLineItems(*stripe.String(sess.ID), nil)
+	for ii.Next() {
+		li := ii.LineItem()
+
+		thisLineItem := OrderLineItem{}
+		thisLineItem.StripeLineItem = li
+
+		// get name
+		for _, p := range products {
+			if p.ID == li.Price.Product.ID {
+				thisLineItem.Name = p.Name
+			}
+		}
+
+		lineItems = append(lineItems, thisLineItem)
+	}
+
+	pi, _ := paymentintent.Get(
+		*stripe.String(sess.PaymentIntent.ID),
+		nil,
+	)
+
+	data.LineItems = lineItems
+	data.MetaData = pi.Metadata
+
+	return data
+
 }
 
 type ChargeList struct {
@@ -370,18 +397,32 @@ func HandleStripeWebhook(c echo.Context) error {
 	return c.String(http.StatusOK, "ok")
 }
 
-func handleCompletedCheckoutSession(session stripe.CheckoutSession) {
+type OrderLineItem struct {
+	StripeLineItem *stripe.LineItem `json:"stripeLineItem"`
+	Name           string           `json:"name"`
+}
+
+type SessionOrderData struct {
+	LineItems []OrderLineItem   `json:"lineItems"`
+	MetaData  map[string]string `json:"metadata"`
+}
+
+func handleCompletedCheckoutSession(sess stripe.CheckoutSession) {
 	// Fulfill the purchase.
 	// here is where the transaction record is updated, with a completed status
 	log.Println("handleCompletedCheckoutSession")
 
 	WebsocketWriter(&SocketMessage{
-		Amount:          session.AmountTotal,
-		PaymentIntentID: session.PaymentIntent.ID,
+		Amount:          sess.AmountTotal,
+		PaymentIntentID: sess.PaymentIntent.ID,
 	})
 
-	createGoogleCalendarEvent(session.PaymentIntent.Metadata, session)
-	SendOrderReceivedEmail(session)
+	sessionData := getSessionOrderData(sess)
+
+	sendGoogleMail("plelldavid@gmail.com", "New order!", sessionData, RECIEPT_EMAIL_HTML)
+	sendGoogleMail("plelldavid@gmail.com", "Thank you for your order", sessionData, ORDER_EMAIL_HTML)
+
+	createGoogleCalendarEvent(sessionData)
 }
 
 func handleSuccessfulPaymentIntent(intent stripe.PaymentIntent) {
