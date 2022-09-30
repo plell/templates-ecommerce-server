@@ -19,7 +19,7 @@ import (
 )
 
 // func GoogleRefreshToken() {
-// 	tok, err := tokenFromFile(tokenFileName)
+// 	tok, err := tokenFromFile(tokenPath)
 // 	if err != nil {
 // 		log.Println("No token to refresh")
 // 		return
@@ -38,12 +38,10 @@ import (
 // 	}
 
 // 	// store new token
-// 	saveToken(tokenFileName, token)
+// 	saveToken(tokenPath, token)
 // }
 
-const RFC3339 = "2006-01-02T15:04:05Z07:00"
-
-var tokenFileName = "google-token.json"
+var tokenPath = "tokens/google-token.json"
 
 func GoogleLogin(c echo.Context) error {
 	googleConfig := SetupConfig()
@@ -70,7 +68,7 @@ func GoogleCallback(c echo.Context) error {
 	}
 
 	// store token
-	saveToken(tokenFileName, token)
+	saveToken(tokenPath, token)
 
 	fmt.Fprintln(c.Response().Writer, "Authentication successful!")
 
@@ -83,10 +81,10 @@ func getClient() *http.Client {
 	// created automatically when the authorization flow completes for the first
 	// time.
 	config := SetupConfig()
-	tok, err := tokenFromFile(tokenFileName)
+	tok, err := tokenFromFile(tokenPath)
 	if err != nil {
 		tok = getTokenFromWeb(config)
-		saveToken(tokenFileName, tok)
+		saveToken(tokenPath, tok)
 	}
 	return config.Client(context.Background(), tok)
 }

@@ -173,15 +173,15 @@ func CreateProductCheckoutSessionByCustomer(c echo.Context) error {
 
 	log.Println("session.LineItems", session.LineItems)
 
-	// body := `<div>
-	// 	Product Checkout created!
-	// 	<div style="margin:80px">
-	// 	MARGIN BABY
-	// 	</div>
-	// </div>`
+	body := `<div>
+		Product Checkout created!
+		<div style="margin:80px">
+		MARGIN BABY
+		</div>
+	</div>`
 
-	// createGoogleCalendarEvent(metaData, *session)
-	// sendGoogleMail("plelldavid@gmail.com", body)
+	createGoogleCalendarEvent(metaData, *session)
+	sendGoogleMail("plelldavid@gmail.com", body)
 
 	return c.JSON(http.StatusOK, data)
 }
