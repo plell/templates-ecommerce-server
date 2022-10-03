@@ -172,6 +172,7 @@ func CreateProductCheckoutSessionByCustomer(c echo.Context) error {
 	humanReadableMetaDataString := makeOrderDescriptionFromMetadata(metaData)
 
 	params := &stripe.CheckoutSessionParams{
+		CustomerEmail: &customerEmail,
 		PaymentIntentData: &stripe.CheckoutSessionPaymentIntentDataParams{
 			ReceiptEmail: &customerEmail,
 			Metadata:     metaData,
@@ -229,6 +230,7 @@ func CreateAmountCheckoutSessionByCustomer(c echo.Context) error {
 	humanReadableMetaDataString := makeOrderDescriptionFromMetadata(metaData)
 
 	params := &stripe.CheckoutSessionParams{
+		CustomerEmail: &customerEmail,
 		PaymentIntentData: &stripe.CheckoutSessionPaymentIntentDataParams{
 			ReceiptEmail: &customerEmail,
 			Metadata:     metaData,
@@ -442,8 +444,8 @@ func handleCompletedCheckoutSession(sess stripe.CheckoutSession, c echo.Context)
 	newOrderEmailTemplate := MakeNewOrderEmailTemplate(sessionData)
 	receiptEmailTemplate := MakeReceiptEmailTemplate(sessionData)
 
-	sendGoogleMail(c, "plelldavid@gmail.com", "New order!", newOrderEmailTemplate)
-	sendGoogleMail(c, "plelldavid@gmail.com", "Thank you for your order", receiptEmailTemplate)
+	sendGoogleMail(c, STORE_EMAIL, "New order!", newOrderEmailTemplate)
+	sendGoogleMail(c, sess.CustomerEmail, "Thank you for your order", receiptEmailTemplate)
 
 	createGoogleCalendarEvent(c, sessionData)
 }

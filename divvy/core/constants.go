@@ -13,7 +13,7 @@ var PAYMENT_CANCEL_URL = "https://www.lazycowbakeryseattle.com/"
 var STORE_NAME = "Lazy Cow Bakery"
 var STORE_DOMAIN_NAME = "lazycowbakeryseattle.com"
 var STORE_PRODUCT_NAME = "Custom Cake"
-var STORE_EMAIL = "plelldavid@gmail.com"
+var STORE_EMAIL = "lazycowbakery@gmail.com" //"plelldavid@gmail.com"
 var STORE_VENDOR_ID = "ZALdmzb6swk0wt"
 
 func getGoogleKeys() (string, string) {
@@ -29,7 +29,7 @@ func SetupConfig() *oauth2.Config {
 	conf := &oauth2.Config{
 		ClientID:     clientId,
 		ClientSecret: clientSecret,
-		RedirectURL:  "http://localhost:8000/google/callback",
+		RedirectURL:  "https://api.plellworks.com/google/callback", //"http://localhost:8000/google/callback",
 		Scopes: []string{
 			"https://www.googleapis.com/auth/gmail.send",
 			"https://www.googleapis.com/auth/calendar.events",
