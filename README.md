@@ -24,6 +24,11 @@ create the traefik container
     --name traefik \
     traefik:v2.2
 
+create volumes
+
+    docker volume create tokens
+    docker volume create database_data
+
 start docker-compose services:
 
     docker-compose up -d

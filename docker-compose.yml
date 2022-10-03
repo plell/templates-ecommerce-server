@@ -7,6 +7,19 @@ networks:
         external: false
 
 services:
+    db:
+        image: postgres:13
+        restart: on-failure
+        environment:
+            - POSTGRES_PASSWORD=postgres
+            - POSTGRES_USER=postgres
+        volumes:
+            - db_data:/var/lib/postgresql/data
+        networks:
+            - internal
+        ports:
+            - 5432:5432
+
     divvy:
         restart: on-failure
         build: .
@@ -18,10 +31,17 @@ services:
         networks:
             - internal
             - web
-        ports:
-            - "8000:8000"
+        depends_on:
+            - db
         volumes:
             - tokens:/divvy/tokens
+        ports:
+            - "8000:8000"
+        environment:
+            - DATABASE_URL=postgres://postgres:postgres@db:5432/postgres?sslmode=disable
+
 
 volumes:
-    tokens: 
+    tokens: {}
+    db_data:
+        driver: local

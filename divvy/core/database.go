@@ -1,14 +1,11 @@
 package core
 
 import (
-
-	//   "strconv"
 	"fmt"
+	"os"
 
-	"gorm.io/driver/mysql"
+	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
-	// "gorm.io/driver/mysql"
-	// "gorm.io/gorm"
 )
 
 // DB obj
@@ -18,7 +15,7 @@ func ConnectDB() {
 	// db connection with gorm
 	// refer https://github.com/go-sql-driver/mysql#dsn-data-source-name for details
 	// [username[:password]@][protocol[(address)]]/dbname[?param1=value1&...&paramN=valueN]
-	// "user:pass@tcp(127.0.0.1:3306)/dbname?charset=utf8mb4&parseTime=True&loc=Local"
+	// "user:pass@tcp(127.0.0.1:5432)/dbname?charset=utf8mb4&parseTime=True&loc=Local"
 	// sslmode := os.Getenv("SSLMODE")
 
 	// username := os.Getenv("USERNAME")
@@ -28,9 +25,9 @@ func ConnectDB() {
 	// database := os.Getenv("DATABASE")
 	// dsn := username + ":" + password + "@tcp(" + host + ":" + port + ")/" + database + "?charset=utf8mb4&parseTime=True&loc=Local"
 
-	dsn := "root:password@tcp(127.0.0.1:3306)/divvy?charset=utf8mb4&parseTime=True&loc=Local"
+	dsn := os.Getenv("DATABASE_URL")
 
-	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{
+	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
 		DisableForeignKeyConstraintWhenMigrating: true,
 	})
 
@@ -39,6 +36,8 @@ func ConnectDB() {
 		fmt.Println("DB ERROR:")
 		panic(err)
 	}
+
+	fmt.Println("CONNECTED TO DB!")
 
 	DB = db
 }

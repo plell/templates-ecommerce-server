@@ -16,18 +16,18 @@ func MakeRoutes(e *echo.Echo) {
 		`)
 	})
 
-	e.Any("/google/login", echo.HandlerFunc(GoogleLogin))
+	e.Any("/:vendor/google/login", echo.HandlerFunc(GoogleLogin))
 	e.Any("/google/callback", echo.HandlerFunc(GoogleCallback))
 
 	// stripe webhook listener
 	e.Any("/webhook", echo.HandlerFunc(HandleStripeWebhook))
 
 	// token not required group
-	e.POST("/stripe/createAmountSessionByCustomer", CreateAmountCheckoutSessionByCustomer)
-	e.POST("/stripe/createProductSessionByCustomer", CreateProductCheckoutSessionByCustomer)
-	e.GET("/stripe/products", GetProductsFromStripe)
-	e.POST("/email/subscribe", SendSubscriberEmail)
-	e.POST("/email/contact", SendContactFormEmail)
+	e.POST("/:vendor/stripe/createAmountSessionByCustomer", CreateAmountCheckoutSessionByCustomer)
+	e.POST("/:vendor/stripe/createProductSessionByCustomer", CreateProductCheckoutSessionByCustomer)
+	e.GET("/:vendor/stripe/products", GetProductsFromStripe)
+	e.POST("/:vendor/email/subscribe", SendSubscriberEmail)
+	e.POST("/:vendor/email/contact", SendContactFormEmail)
 
 	// client webhooks, userSelector required
 	// u := e.Group("")

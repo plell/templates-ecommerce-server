@@ -34,13 +34,13 @@ func main() {
 	core.MakeRoutes(e)
 
 	// DB connect
-	// core.ConnectDB()
+	core.ConnectDB()
 	// DB Automigrate
-	// core.MigrateUp()
+	core.MigrateUp()
 
 	// cron stuff
 	c := cron.New()
-	c.AddFunc("@every 20m", func() {
+	c.AddFunc("@every 30m", func() {
 		// tokens expire after 1h
 		core.GoogleRefreshTokenIfExists()
 	})

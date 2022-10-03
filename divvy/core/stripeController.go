@@ -24,6 +24,11 @@ func getStripeKey() string {
 	return stripeKey
 }
 
+func getStripeWebhookKey() string {
+	stripeKey := os.Getenv("STRIPE_WEBHOOK_SECRET")
+	return stripeKey
+}
+
 type CreateCheckoutSessionResponse struct {
 	SessionID string `json:"sessionId"`
 }
@@ -96,6 +101,21 @@ func makeOrderDescriptionFromMetadata(metadata map[string]string) string {
 	}
 
 	return description
+}
+
+func makeOrderMetaFromMetadata(metadata map[string]string) map[string]string {
+	var meta map[string]string
+
+	for key, value := range metadata {
+		if stringArrayContains(skipList, key) {
+			continue
+		}
+		// replace _ and make capitalize words
+		newKey := strings.ToUpper(strings.ReplaceAll(key, "_", " "))
+		meta[newKey] = value
+	}
+
+	return meta
 }
 
 func CreateProductCheckoutSessionByCustomer(c echo.Context) error {
@@ -250,7 +270,7 @@ func CreateAmountCheckoutSessionByCustomer(c echo.Context) error {
 	return c.JSON(http.StatusOK, data)
 }
 
-func getSessionOrderData(sess stripe.CheckoutSession) SessionOrderData {
+func getSessionOrderData(sess stripe.CheckoutSession, c echo.Context) SessionOrderData {
 
 	data := SessionOrderData{}
 
@@ -349,7 +369,7 @@ func HandleStripeWebhook(c echo.Context) error {
 		return c.String(http.StatusOK, "ok")
 	}
 
-	webhookSecret := os.Getenv("STRIPE_WEBHOOK_SECRET")
+	webhookSecret := getStripeWebhookKey()
 
 	// Verify webhook signature and extract the event.
 	// See https://stripe.com/docs/webhooks/signatures for more information.
@@ -391,7 +411,7 @@ func HandleStripeWebhook(c echo.Context) error {
 			w.WriteHeader(http.StatusBadRequest)
 			return c.String(http.StatusOK, "ok")
 		}
-		handleCompletedCheckoutSession(session)
+		handleCompletedCheckoutSession(session, c)
 	}
 
 	return c.String(http.StatusOK, "ok")
@@ -407,7 +427,7 @@ type SessionOrderData struct {
 	MetaData  map[string]string `json:"metadata"`
 }
 
-func handleCompletedCheckoutSession(sess stripe.CheckoutSession) {
+func handleCompletedCheckoutSession(sess stripe.CheckoutSession, c echo.Context) {
 	// Fulfill the purchase.
 	// here is where the transaction record is updated, with a completed status
 	log.Println("handleCompletedCheckoutSession")
@@ -417,12 +437,15 @@ func handleCompletedCheckoutSession(sess stripe.CheckoutSession) {
 		PaymentIntentID: sess.PaymentIntent.ID,
 	})
 
-	sessionData := getSessionOrderData(sess)
+	sessionData := getSessionOrderData(sess, c)
 
-	sendGoogleMail("plelldavid@gmail.com", "New order!", sessionData, RECIEPT_EMAIL_HTML)
-	sendGoogleMail("plelldavid@gmail.com", "Thank you for your order", sessionData, ORDER_EMAIL_HTML)
+	newOrderEmailTemplate := MakeNewOrderEmailTemplate(sessionData)
+	receiptEmailTemplate := MakeReceiptEmailTemplate(sessionData)
 
-	createGoogleCalendarEvent(sessionData)
+	sendGoogleMail(c, "plelldavid@gmail.com", "New order!", newOrderEmailTemplate)
+	sendGoogleMail(c, "plelldavid@gmail.com", "Thank you for your order", receiptEmailTemplate)
+
+	createGoogleCalendarEvent(c, sessionData)
 }
 
 func handleSuccessfulPaymentIntent(intent stripe.PaymentIntent) {
