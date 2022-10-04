@@ -1,5 +1,4 @@
 .env
 acme.json
-google-token.json
-token.json
+data
 divvy/.DS_Store

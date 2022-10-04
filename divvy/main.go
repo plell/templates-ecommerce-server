@@ -38,6 +38,9 @@ func main() {
 	// DB Automigrate
 	core.MigrateUp()
 
+	// do token refresh on start
+	core.GoogleRefreshTokenIfExists()
+
 	// cron stuff
 	c := cron.New()
 	c.AddFunc("@every 30m", func() {

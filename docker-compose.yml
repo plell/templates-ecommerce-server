@@ -1,4 +1,3 @@
-version: "3.3"  # optional since v1.27.0
 
 networks:
     web:
@@ -14,7 +13,7 @@ services:
             - POSTGRES_PASSWORD=postgres
             - POSTGRES_USER=postgres
         volumes:
-            - db_data:/var/lib/postgresql/data
+            - ./data/pgdata/:/var/lib/postgresql/data
         networks:
             - internal
         ports:
@@ -34,14 +33,10 @@ services:
         depends_on:
             - db
         volumes:
-            - tokens:/divvy/tokens
+            - ./data/authtokens:/app/divvy/tokens
         ports:
             - "8000:8000"
         environment:
             - DATABASE_URL=postgres://postgres:postgres@db:5432/postgres?sslmode=disable
 
 
-volumes:
-    tokens: {}
-    db_data:
-        driver: local

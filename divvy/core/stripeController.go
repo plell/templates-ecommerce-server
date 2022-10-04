@@ -97,22 +97,22 @@ func makeOrderDescriptionFromMetadata(metadata map[string]string) string {
 		}
 		// replace _ and make capitalize words
 		newKey := strings.ToUpper(strings.ReplaceAll(key, "_", " "))
-		description += newKey + ": " + value + " - \n"
+		description += newKey + ": " + value + " / \n"
 	}
 
 	return description
 }
 
 func makeOrderMetaFromMetadata(metadata map[string]string) map[string]string {
-	var meta map[string]string
+	meta := make(map[string]string)
 
 	for key, value := range metadata {
 		if stringArrayContains(skipList, key) {
 			continue
 		}
 		// replace _ and make capitalize words
-		newKey := strings.ToUpper(strings.ReplaceAll(key, "_", " "))
-		meta[newKey] = value
+		newKey := strings.Title(strings.ReplaceAll(key, "_", " "))
+		meta[newKey] = strings.ToUpper(value)
 	}
 
 	return meta

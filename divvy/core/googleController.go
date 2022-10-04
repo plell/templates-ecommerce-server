@@ -19,8 +19,7 @@ import (
 )
 
 func getTokenPath() string {
-	tp := "tokens/google-token.json"
-	return tp
+	return AUTH_TOKEN_PATH
 }
 
 // FIXME GO THROUGH ALL TOKENS IN token folder

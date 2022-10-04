@@ -1,4 +1,4 @@
-create the network and traefik container:
+create the network and volumes:
 
     docker network create web
 
@@ -23,11 +23,6 @@ create the traefik container
     --network web \
     --name traefik \
     traefik:v2.2
-
-create volumes
-
-    docker volume create tokens
-    docker volume create database_data
 
 start docker-compose services:
 
