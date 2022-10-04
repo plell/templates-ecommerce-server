@@ -34,9 +34,9 @@ func main() {
 	core.MakeRoutes(e)
 
 	// DB connect
-	core.ConnectDB()
+	// core.ConnectDB()
 	// DB Automigrate
-	core.MigrateUp()
+	// core.MigrateUp()
 
 	// do token refresh on start
 	core.GoogleRefreshTokenIfExists()
