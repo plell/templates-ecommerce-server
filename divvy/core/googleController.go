@@ -212,7 +212,7 @@ func sendGoogleMail(c echo.Context, to string, subject string, bodyhtml string) 
 	_to := "To: " + to + "\n"
 	_subject := "Subject: " + subject + "\n"
 	mime := "MIME-version: 1.0;\nContent-Type: text/html; charset=\"UTF-8\";\n\n"
-	body := "<html><body>" + bodyhtml + "</body></html>"
+	body := EMAIL_HEADER + bodyhtml + EMAIL_FOOTER
 	byteMsg := []byte(_to + _subject + mime + body)
 
 	encodedMessage := base64.StdEncoding.EncodeToString(byteMsg)

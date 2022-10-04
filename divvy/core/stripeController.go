@@ -314,6 +314,7 @@ func getSessionOrderData(sess stripe.CheckoutSession, c echo.Context) SessionOrd
 
 	data.LineItems = lineItems
 	data.MetaData = pi.Metadata
+	data.PaymentIntent = pi
 
 	return data
 
@@ -425,8 +426,9 @@ type OrderLineItem struct {
 }
 
 type SessionOrderData struct {
-	LineItems []OrderLineItem   `json:"lineItems"`
-	MetaData  map[string]string `json:"metadata"`
+	LineItems     []OrderLineItem       `json:"lineItems"`
+	MetaData      map[string]string     `json:"metadata"`
+	PaymentIntent *stripe.PaymentIntent `json:"paymentIntent"`
 }
 
 func handleCompletedCheckoutSession(sess stripe.CheckoutSession, c echo.Context) {
@@ -445,7 +447,7 @@ func handleCompletedCheckoutSession(sess stripe.CheckoutSession, c echo.Context)
 	receiptEmailTemplate := MakeReceiptEmailTemplate(sessionData)
 
 	sendGoogleMail(c, STORE_EMAIL, "New order!", newOrderEmailTemplate)
-	sendGoogleMail(c, sess.CustomerEmail, "Thank you for your order", receiptEmailTemplate)
+	sendGoogleMail(c, sessionData.PaymentIntent.ReceiptEmail, "Thank you for your order!", receiptEmailTemplate)
 
 	createGoogleCalendarEvent(c, sessionData)
 }

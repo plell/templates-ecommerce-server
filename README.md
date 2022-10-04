@@ -43,3 +43,7 @@ traefik how to:
 monitoring:
 
     https://monitor.[domain name]/dashboard/
+
+webhook development:
+
+    stripe listen --forward-to localhost:8000/webhook
