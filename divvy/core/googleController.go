@@ -187,18 +187,66 @@ func saveToken(path string, token *oauth2.Token) {
 	json.NewEncoder(f).Encode(token)
 }
 
+type NewSubscriberRequest struct {
+	Email string `json:"email"`
+}
+
 func SendSubscriberEmail(c echo.Context) error {
-	sendGoogleMail(c, STORE_EMAIL, "SendSubscriberEmail", "")
-	return c.String(http.StatusOK, "ok")
+	request := NewSubscriberRequest{}
+	defer c.Request().Body.Close()
+	err := json.NewDecoder(c.Request().Body).Decode(&request)
+	if err != nil {
+		return c.String(http.StatusInternalServerError, "can't decode request")
+	}
+
+	bodyHtml := `<div>
+	<div>
+	Please add this email to your mailing list: ` + request.Email + `
+	</div>
+</div>
+`
+
+	err = sendGoogleMail(c, STORE_EMAIL, "You have a new subscriber!", bodyHtml)
+	if err != nil {
+		return err
+	}
+
+	return c.JSON(http.StatusOK, EMPTY_JSON)
+}
+
+type ContactFormRequest struct {
+	Name    string `json:"name"`
+	Email   string `json:"email"`
+	Message string `json:"message"`
 }
 
 func SendContactFormEmail(c echo.Context) error {
-	sendGoogleMail(c, STORE_EMAIL, "SendContactFormEmail", "")
-	return c.String(http.StatusOK, "ok")
+	request := ContactFormRequest{}
+
+	defer c.Request().Body.Close()
+	err := json.NewDecoder(c.Request().Body).Decode(&request)
+	if err != nil {
+		return c.String(http.StatusInternalServerError, "can't decode request")
+	}
+
+	bodyHtml := `<div>
+		<div style="margin-bottom:30px;font-weight:bold;">
+		` + request.Name + ` (` + request.Email + `) reached out using your contact form.
+		</div>
+		<div>
+		` + request.Message + `
+		</div>
+	</div>
+	`
+
+	err = sendGoogleMail(c, STORE_EMAIL, "You have a new message", bodyHtml)
+	if err != nil {
+		return err
+	}
+	return c.JSON(http.StatusOK, EMPTY_JSON)
 }
 
-// fixme there wont always be data!
-func sendGoogleMail(c echo.Context, to string, subject string, bodyhtml string) {
+func sendGoogleMail(c echo.Context, to string, subject string, bodyhtml string) error {
 	log.Println("sendGoogleMail")
 	ctx := context.Background()
 	client := getClient(c)
@@ -206,7 +254,7 @@ func sendGoogleMail(c echo.Context, to string, subject string, bodyhtml string) 
 	gmailService, err := gmail.NewService(ctx, option.WithHTTPClient(client))
 	if err != nil {
 		log.Printf("Unable to retrieve Gmail client: %v", err)
-		return
+		return c.String(http.StatusInternalServerError, "Unable to retrieve Gmail client")
 	}
 
 	_to := "To: " + to + "\n"
@@ -241,11 +289,13 @@ func sendGoogleMail(c echo.Context, to string, subject string, bodyhtml string) 
 	ok, err := res.Do()
 
 	if err != nil {
-		log.Printf("Unable to retrieve Gmail client: %v", err)
-		return
+		log.Printf("Unable to send mail: %v", err)
+		return c.String(http.StatusInternalServerError, "Unable to send mail")
 	}
 
 	fmt.Printf("ok.HTTPStatusCode: %v\n", ok.HTTPStatusCode)
+
+	return nil
 }
 
 func createGoogleCalendarEvent(c echo.Context, orderData SessionOrderData) {

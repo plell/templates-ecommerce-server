@@ -10,23 +10,28 @@ import (
 	"golang.org/x/oauth2/google"
 )
 
+type EmptyJSON struct {
+}
+
 var (
-	IS_DEV = os.Getenv("IS_DEV")
+	IS_DEV     = os.Getenv("IS_DEV")
+	EMPTY_JSON = EmptyJSON{}
 	// prod
 	PAYMENT_SUCCESS_URL = "https://www.lazycowbakeryseattle.com/success"
 	PAYMENT_CANCEL_URL  = "https://www.lazycowbakeryseattle.com/"
+	STORE_EMAIL         = "lazycowbakery@gmail.com"
+	GOOGLE_REDIRECT_URL = "https://api.plellworks.com/google/callback"
+
 	// dev
+	// STORE_EMAIL         = "plelldavid@gmail.com"
+	// GOOGLE_REDIRECT_URL = "http://localhost:8000/google/callback"
 	// PAYMENT_SUCCESS_URL = "http://localhost:3000/success"
 	// PAYMENT_CANCEL_URL  = "http://localhost:3000"
 	STORE_NAME         = "Lazy Cow Bakery"
 	STORE_DOMAIN_NAME  = "lazycowbakeryseattle.com"
 	STORE_PRODUCT_NAME = "Custom Cake"
 	// prod
-	STORE_EMAIL         = "lazycowbakery@gmail.com"
-	GOOGLE_REDIRECT_URL = "https://api.plellworks.com/google/callback"
-	// dev
-	// STORE_EMAIL         = "plelldavid@gmail.com"
-	// GOOGLE_REDIRECT_URL = "http://localhost:8000/google/callback"
+
 	STORE_VENDOR_ID = "ZALdmzb6swk0wt"
 	AUTH_TOKEN_PATH = "tokens/google-token-" + STORE_VENDOR_ID + ".json"
 )
