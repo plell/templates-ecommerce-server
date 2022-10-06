@@ -39,16 +39,10 @@ func GoogleRefreshTokenIfExists() {
 		return
 	}
 
-	log.Println("AccessToken", token.AccessToken)
-	log.Println("RefreshToken", token.RefreshToken)
-	log.Println("TokenType", token.TokenType)
-	log.Println("Expiry", token.Expiry)
-
-	now := time.Now()
-
-	timeUntilExpire := token.Expiry.Unix() - now.Unix()
-
-	log.Println("timeUntilExpire", timeUntilExpire)
+	// log.Println("AccessToken", token.AccessToken)
+	// log.Println("RefreshToken", token.RefreshToken)
+	// log.Println("TokenType", token.TokenType)
+	// log.Println("Expiry", token.Expiry)
 
 	config := SetupConfig()
 
@@ -323,6 +317,7 @@ func createGoogleCalendarEvent(c echo.Context, orderData SessionOrderData) {
 	if eventTime != "" {
 		t, err := time.Parse(time.RFC3339, eventTime)
 		if err != nil {
+			log.Println("could not parse time for calendar event")
 			return
 		}
 		date = t
@@ -362,11 +357,11 @@ func createGoogleCalendarEvent(c echo.Context, orderData SessionOrderData) {
 		Description: description,
 		Start: &calendar.EventDateTime{
 			DateTime: dateString,
-			TimeZone: "America/Los_Angeles",
+			TimeZone: STORE_TIMEZONE,
 		},
 		End: &calendar.EventDateTime{
 			DateTime: dateString,
-			TimeZone: "America/Los_Angeles",
+			TimeZone: STORE_TIMEZONE,
 		},
 		Recurrence: []string{},
 		Attendees:  []*calendar.EventAttendee{},

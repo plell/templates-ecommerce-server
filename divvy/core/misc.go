@@ -13,6 +13,28 @@ import (
 	_ "github.com/shopspring/decimal"
 )
 
+func ConvertIsoToReadableLocalTimeString(iso string) string {
+	formattedDate := iso
+	parsedDate, err := time.Parse(time.RFC3339, formattedDate)
+	if err != nil {
+		log.Println("could not parse date")
+	} else {
+		loc, err := time.LoadLocation(STORE_TIMEZONE)
+
+		if err != nil {
+			log.Println("couldnt make loc!")
+		} else {
+			localTime := parsedDate.In(loc)
+			month := localTime.Month().String()
+			day := strconv.Itoa(localTime.Day())
+			year := strconv.Itoa(localTime.Year())
+			formattedDate = month + " " + day + ", " + year
+		}
+	}
+
+	return formattedDate
+}
+
 func Pong(c echo.Context) error {
 	return c.String(http.StatusOK, "Pong")
 }

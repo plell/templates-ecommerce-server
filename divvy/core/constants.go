@@ -1,10 +1,8 @@
 package core
 
 import (
-	"log"
 	"os"
 	"strconv"
-	"time"
 
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
@@ -27,6 +25,8 @@ var (
 	// GOOGLE_REDIRECT_URL = "http://localhost:8000/google/callback"
 	// PAYMENT_SUCCESS_URL = "http://localhost:3000/success"
 	// PAYMENT_CANCEL_URL  = "http://localhost:3000"
+
+	STORE_TIMEZONE     = "America/Los_Angeles"
 	STORE_NAME         = "Lazy Cow Bakery"
 	STORE_DOMAIN_NAME  = "lazycowbakeryseattle.com"
 	STORE_PRODUCT_NAME = "Custom Cake"
@@ -60,26 +60,6 @@ func SetupConfig() *oauth2.Config {
 	return conf
 }
 
-func getReadableDate(date string) string {
-	if date == "" {
-		return date
-	}
-
-	formattedDate := date
-
-	parsedDate, err := time.Parse(time.RFC3339, formattedDate)
-	if err != nil {
-		log.Println("could not parse date")
-	} else {
-		month := parsedDate.Month().String()
-		day := strconv.Itoa(parsedDate.Day())
-		year := strconv.Itoa(parsedDate.Year())
-		formattedDate = month + " " + day + ", " + year
-	}
-
-	return formattedDate
-}
-
 func MakeReceiptEmailTemplate(data SessionOrderData) string {
 	template := ""
 	customerName := ""
@@ -88,7 +68,7 @@ func MakeReceiptEmailTemplate(data SessionOrderData) string {
 
 	if _, ok := data.MetaData["pickup_date"]; ok {
 		date = data.MetaData["pickup_date"]
-		date = getReadableDate(date)
+		date = ConvertIsoToReadableLocalTimeString(date)
 	}
 
 	if _, ok := data.MetaData["first_name"]; ok {
@@ -144,7 +124,7 @@ func MakeNewOrderEmailTemplate(data SessionOrderData) string {
 
 	if _, ok := data.MetaData["pickup_date"]; ok {
 		date = data.MetaData["pickup_date"]
-		date = getReadableDate(date)
+		date = ConvertIsoToReadableLocalTimeString(date)
 	}
 
 	if _, ok := data.MetaData["first_name"]; ok {
