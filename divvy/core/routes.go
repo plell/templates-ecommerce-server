@@ -1,9 +1,11 @@
 package core
 
 import (
+	"crypto/subtle"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 )
 
 func MakeRoutes(e *echo.Echo) {
@@ -16,7 +18,18 @@ func MakeRoutes(e *echo.Echo) {
 		`)
 	})
 
-	e.Any("/:vendor/google/login", echo.HandlerFunc(GoogleLogin))
+	p := e.Group("")
+
+	p.Use(middleware.BasicAuth(func(username, password string, c echo.Context) (bool, error) {
+		// Be careful to use constant time comparison to prevent timing attacks
+		if subtle.ConstantTimeCompare([]byte(username), []byte("admin")) == 1 &&
+			subtle.ConstantTimeCompare([]byte(password), []byte(STORE_VENDOR_ID)) == 1 {
+			return true, nil
+		}
+		return false, nil
+	}))
+
+	p.Any("/:vendor/google/login", echo.HandlerFunc(GoogleLogin))
 	e.Any("/google/callback", echo.HandlerFunc(GoogleCallback))
 
 	// stripe webhook listener
