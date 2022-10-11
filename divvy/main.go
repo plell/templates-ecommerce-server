@@ -43,7 +43,7 @@ func main() {
 
 	// cron stuff
 	c := cron.New()
-	c.AddFunc("@every 30m", func() {
+	c.AddFunc("@every 100h", func() {
 		// tokens expire after 1h
 		core.GoogleRefreshTokenIfExists()
 	})
