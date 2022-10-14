@@ -40,11 +40,10 @@ func main() {
 
 	// do token refresh on start
 	core.GoogleRefreshTokenIfExists()
-
 	// cron stuff
 	c := cron.New()
-	c.AddFunc("@every 100h", func() {
-		// tokens expire after 1h
+	c.AddFunc("@every 30m", func() {
+		// test refresh tokens expire after 7d, tokens expire after 60m
 		core.GoogleRefreshTokenIfExists()
 	})
 	c.Start()
