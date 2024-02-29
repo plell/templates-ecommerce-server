@@ -15,8 +15,8 @@ var (
 	IS_DEV     = os.Getenv("IS_DEV")
 	EMPTY_JSON = EmptyJSON{}
 	// prod
-	PAYMENT_SUCCESS_URL = "https://www.lazycowbakeryseattle.com/success"
-	PAYMENT_CANCEL_URL  = "https://www.lazycowbakeryseattle.com/"
+	PAYMENT_SUCCESS_URL = "https://www.lazycow.cafe/success"
+	PAYMENT_CANCEL_URL  = "https://www.lazycow.cafe/"
 	STORE_EMAIL         = "lazycowbakery@gmail.com"
 	GOOGLE_REDIRECT_URL = "https://api.plellworks.com/google/callback"
 
@@ -28,7 +28,7 @@ var (
 
 	STORE_TIMEZONE     = "America/Los_Angeles"
 	STORE_NAME         = "Lazy Cow Bakery"
-	STORE_DOMAIN_NAME  = "lazycowbakeryseattle.com"
+	STORE_DOMAIN_NAME  = "lazycow.cafe"
 	STORE_PRODUCT_NAME = "Custom Cake"
 	// prod
 
@@ -177,7 +177,7 @@ var TEMPLATE_FOOTER = `
 	<div style="margin-bottom:20px;">
 	3418 Fremont Avenue North, Seattle, WA, USA
 	</div>
-	<a href="https://lazycowbakeryseattle.com/">Check out our site</a>
+	<a href="https://lazycow.cafe/">Check out our site</a>
 	</div>
 </div>`
 
